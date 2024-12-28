@@ -1,7 +1,7 @@
 ﻿using Persistance.Context;
 using Persistance.DTOs;
 using Persistance.Models;
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
 
 namespace Persistance.Repositories
 {

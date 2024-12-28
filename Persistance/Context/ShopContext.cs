@@ -1,13 +1,12 @@
 ﻿
+using Microsoft.EntityFrameworkCore;
 using Persistance.Models;
-using System.Data.Entity;
-using System.Data.Entity.ModelConfiguration.Conventions;
 
 namespace Persistance.Context
 {
     internal class ShopContext : DbContext
     {
-        public ShopContext(string connString) : base(connString)
+        public ShopContext(DbContextOptions<ShopContext> options) : base(options)
         {
         }
 
@@ -15,11 +14,19 @@ namespace Persistance.Context
 
         public DbSet<Order> Orders { get; set; }
 
-        public DbSet<OrderProduct> OrderProduct { get; set; }
+        public DbSet<OrderedProduct> OrderedProducts { get; set; }
 
-        protected override void OnModelCreating(DbModelBuilder modelBuilder)
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Conventions.Remove<PluralizingTableNameConvention>();
+            modelBuilder.Entity<OrderedProduct>()
+                .HasOne(op => op.Order)
+                .WithMany(o => o.OrderedProducts)
+                .HasForeignKey(op => op.OrderId);
+
+            modelBuilder.Entity<OrderedProduct>()
+                .HasOne(op => op.Product)
+                .WithMany()
+                .HasForeignKey(op => op.ProductId);
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using MVCCore.Models.Products;
 using Persistance.DTOs;
@@ -7,6 +8,8 @@ using System.Threading.Tasks;
 
 namespace ContosoUniversity.Controllers
 {
+    [Authorize]
+    [ApiController]
     [Route("[controller]")]
     public class ProductsController : Controller
     {

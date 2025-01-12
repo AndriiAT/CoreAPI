@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Persistance.Extensions;
 
@@ -26,51 +28,68 @@ namespace MVCCore
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "API", Version = "v1" });
-                c.SwaggerDoc("admin", new OpenApiInfo { Title = "Admin API", Version = "v1" });
+                //c.SwaggerDoc("admin", new OpenApiInfo { Title = "Admin API", Version = "v1" });
 
-                // Optionally, you can add custom logic to include/exclude endpoints in each document
-                c.DocInclusionPredicate((docName, apiDesc) =>
-                {
-                    if (docName == "admin")
-                    {
-                        return apiDesc.RelativePath.StartsWith("admin/");
-                    }
-                    return !apiDesc.RelativePath.StartsWith("admin/");
-                });
+                //// Optionally, you can add custom logic to include/exclude endpoints in each document
+                //c.DocInclusionPredicate((docName, apiDesc) =>
+                //{
+                //    if (docName == "admin")
+                //    {
+                //        return apiDesc.RelativePath.StartsWith("admin/");
+                //    }
+                //    return !apiDesc.RelativePath.StartsWith("admin/");
+                //});
             });
 
             services.AddPersistance(Configuration);
+
+            // Configure cookie authentication
+            services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie(options =>
+                {
+                    options.LoginPath = "/api/account/login";
+                    options.LogoutPath = "/api/account/logout";
+                    options.Cookie.HttpOnly = true;
+                    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+            }
+            else
+            {
+                app.UseExceptionHandler(a => a.Run(async context =>
+                {
+                    var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>();
+                    var exception = exceptionHandlerPathFeature?.Error;
+
+                    var result = System.Text.Json.JsonSerializer.Serialize(new { error = exception?.Message, stackTrace = exception?.StackTrace });
+                    context.Response.ContentType = "application/json";
+                    await context.Response.WriteAsync(result);
+                }));
+            }
+
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
             app.UseRouting();
 
-            app.UseAuthentication(); // Add this line for user identification
+            app.UseAuthentication();
             app.UseAuthorization();
-
-            app.UseExceptionHandler(a => a.Run(async context =>
-            {
-                var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>();
-                var exception = exceptionHandlerPathFeature?.Error;
-
-                var result = System.Text.Json.JsonSerializer.Serialize(new { error = exception?.Message, stackTrace = exception?.StackTrace });
-                context.Response.ContentType = "application/json";
-                await context.Response.WriteAsync(result);
-            }));
 
             // Enable Swagger UI
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "API V1");
-                c.SwaggerEndpoint("swagger.json", "Admin API V1");
+                //c.SwaggerEndpoint("/swagger/admin/swagger.json", "Admin API V1");
 
-                // Optionally, you can set custom route prefixes
-                c.RoutePrefix = string.Empty; // Set to empty string to serve Swagger UI at the app's root
+                //// Optionally, you can set custom route prefixes
+                //c.RoutePrefix = string.Empty; // Set to empty string to serve Swagger UI at the app's root
             });
 
             app.UseEndpoints(endpoints =>

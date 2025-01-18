@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Persistance.DTOs;
+using Persistance.DTOs.Accounts;
 using Persistance.Repositories;
+using Persistance.Repositories.Accounts;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 

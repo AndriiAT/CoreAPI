@@ -6,6 +6,7 @@ namespace Persistance.Models
     {
         // Additional properties
         public string Description { get; set; }
-        public DateTime CreatedDate { get; set; }
+        public DateTime CreationDate { get; set; }
+        public DateTime ModifiedDate { get; set; }        
     }
 }

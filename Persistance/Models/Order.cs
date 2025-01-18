@@ -1,4 +1,4 @@
-﻿using static Persistance.DTOs.Enums;
+﻿using static Persistance.DTOs.Orders.Enums;
 
 namespace Persistance.Models
 {

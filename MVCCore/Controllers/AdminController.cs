@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Persistance.DTOs;
+using Persistance.DTOs.Accounts;
 using Persistance.Repositories;
+using Persistance.Repositories.Accounts;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -9,7 +11,7 @@ namespace MVCCore.Controllers
 {
     [Authorize]
     [ApiController]
-    [Route("/admin/[controller]")]
+    [Route("[controller]")]
     public class AdminController : ControllerBase
     {
         private readonly IUserRepository _userRepository;

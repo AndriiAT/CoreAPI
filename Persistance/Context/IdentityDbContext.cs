@@ -25,7 +25,7 @@ namespace Persistance.Context
                 Name = "Admin",
                 NormalizedName = "ADMIN",
                 Description = "Administrator role",
-                CreatedDate = DateTime.UtcNow
+                CreationDate = DateTime.UtcNow
             });
 
             var hasher = new PasswordHasher<ApplicationUser>();

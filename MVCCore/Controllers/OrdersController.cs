@@ -1,10 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using MVCCore.Models.Orders;
 using Persistance.DTOs;
+using Persistance.DTOs.Orders;
+using Persistance.DTOs.Products;
 using Persistance.Repositories;
 using System.Linq;
 using System.Threading.Tasks;
-using static Persistance.DTOs.Enums;
+using static Persistance.DTOs.Orders.Enums;
 
 namespace MVCCore.Controllers
 {

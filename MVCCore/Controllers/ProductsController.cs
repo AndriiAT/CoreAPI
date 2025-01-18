@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using MVCCore.Models.Products;
 using Persistance.DTOs;
+using Persistance.DTOs.Products;
 using Persistance.Repositories;
+using Persistance.Repositories.Products;
 using System.Threading.Tasks;
 
 namespace ContosoUniversity.Controllers

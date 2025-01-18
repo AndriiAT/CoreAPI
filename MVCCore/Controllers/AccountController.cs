@@ -1,13 +1,14 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Persistance.DTOs;
+using Persistance.DTOs.Accounts;
 using Persistance.Models;
 using System.Threading.Tasks;
 
 namespace MVCCore.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     public class AccountController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
@@ -57,7 +58,13 @@ namespace MVCCore.Controllers
                 return BadRequest("Invalid login details");
             }
 
-            var result = await _signInManager.PasswordSignInAsync(loginDTO.Email, loginDTO.Password, false, false);
+            var user = await _userManager.FindByEmailAsync(loginDTO.Email);
+            if (user == null)
+            {
+                return Unauthorized("Invalid login attempt");
+            }
+
+            var result = await _signInManager.PasswordSignInAsync(user.UserName, loginDTO.Password, false, false);
             if (result.Succeeded)
             {
                 return Ok("User logged in successfully");

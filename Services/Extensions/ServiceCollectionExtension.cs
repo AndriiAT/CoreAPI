@@ -1,18 +1,15 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
 using Persistance.Context;
 using Persistance.Models;
 using Persistance.Repositories;
 using Persistance.Repositories.Accounts;
 using Persistance.Repositories.Orders;
 using Persistance.Repositories.Products;
-using Persistance.Services;
-using System.Text;
+using ProductsShop.Repositories.Accounts;
 using IdentityDbContext = Persistance.Context.IdentityDbContext;
 
 namespace Persistance.Extensions
@@ -73,7 +70,8 @@ namespace Persistance.Extensions
             services.AddScoped<IOrderedProductRepository, OrderedProductRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IRoleRepository, RoleRepository>();
-
+            services.AddScoped<IAccountService, AccountService>();
+            services.AddScoped<IAccountRepository, AccountRepository>();
             services.AddSingleton<IListsComparer, ListsComparer>();
 
             return services;

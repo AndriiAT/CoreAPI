@@ -1,10 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using MVCCore.Models.Products;
-using Persistance.DTOs;
 using Persistance.DTOs.Products;
-using Persistance.Repositories;
 using Persistance.Repositories.Products;
 using System.Threading.Tasks;
 
@@ -22,9 +19,9 @@ namespace ContosoUniversity.Controllers
             _productRepository = productRepository;
         }
 
-        
         // GET: api/products
         [HttpGet]
+        [Authorize(Roles = "Admin,Manager,User")]
         public async Task<IActionResult> GetProducts()
         {
             var products = await _productRepository.ReadAllAsync();
@@ -34,11 +31,11 @@ namespace ContosoUniversity.Controllers
             }
 
             return Ok(products);
-
         }
 
         // GET: api/products/5
         [HttpGet("{id}")]
+        [Authorize(Roles = "Admin,Manager,User")]
         public async Task<IActionResult> GetProduct([FromRoute] int id)
         {
             var product = await _productRepository.ReadAsync(id);
@@ -52,6 +49,7 @@ namespace ContosoUniversity.Controllers
 
         // POST: api/products
         [HttpPost]
+        [Authorize(Roles = "Admin,Manager")]
         public async Task<IActionResult> CreateProduct([FromBody] ProductBuildingModel product)
         {
             var productDTO = new ProductDTO
@@ -73,6 +71,7 @@ namespace ContosoUniversity.Controllers
         /// <param name="product">The product data to update.</param>
         /// <returns>The updated product.</returns>
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin,Manager")]
         public async Task<IActionResult> UpdateProduct([FromRoute] int id, [FromBody] ProductBuildingModel product)
         {
             var existingProduct = await _productRepository.ReadAsync(id);
@@ -100,6 +99,7 @@ namespace ContosoUniversity.Controllers
 
         // DELETE: api/products/5
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin,Manager")]
         public async Task<IActionResult> DeleteProduct([FromRoute] int id)
         {
             await _productRepository.DeleteAsync(id);

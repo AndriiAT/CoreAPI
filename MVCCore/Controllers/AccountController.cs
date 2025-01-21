@@ -1,8 +1,11 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using MVCCore.Models.Accounts;
 using Persistance.DTOs;
 using Persistance.DTOs.Accounts;
-using Persistance.Models;
+using Persistance.Services.Accounts;
+using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace MVCCore.Controllers
@@ -11,66 +14,125 @@ namespace MVCCore.Controllers
     [Route("[controller]")]
     public class AccountController : ControllerBase
     {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly IAccountService _accountService;
 
-        public AccountController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
+        public AccountController(IAccountService accountService)
         {
-            _userManager = userManager;
-            _signInManager = signInManager;
+            _accountService = accountService;
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterDTO registerDTO)
+        public async Task<IActionResult> Register([FromBody] AccountBuildingModel registerModel)
         {
-            if (registerDTO == null || string.IsNullOrEmpty(registerDTO.Email) || string.IsNullOrEmpty(registerDTO.Password))
+            if (registerModel == null || string.IsNullOrEmpty(registerModel.Mail) || string.IsNullOrEmpty(registerModel.Password))
             {
                 return BadRequest("Invalid registration details");
             }
 
-            var user = new ApplicationUser
+            var registerDTO = new RegisterDTO
             {
-                UserName = registerDTO.Email,
-                Email = registerDTO.Email,
-                FirstName = registerDTO.FirstName,
-                LastName = registerDTO.LastName
+                Email = registerModel.Mail,
+                Password = registerModel.Password,
+                FirstName = registerModel.FirstName,
+                LastName = registerModel.LastName,
+                Address = registerModel.Address,
             };
 
-            var result = await _userManager.CreateAsync(user, registerDTO.Password);
-            if (result.Succeeded)
+            // Check if the user is authorized and has the admin role
+            if (User.Identity.IsAuthenticated && User.IsInRole("Admin"))
+                registerDTO.RoleName = registerModel.Role;
+            else
+                registerDTO.RoleName = "User";
+
+
+            var result = await _accountService.RegisterAsync(registerDTO);
+            if (result.IsSuccess)
+            {
+                var user = result.Data as ApplicationUserDTO;
+                if (user == null)
+                {
+                    return BadRequest("User data is null");
+                }
+
+                var accountViewModel = new AccountViewModel
+                {
+                    UserId = user.Id,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    Email = user.Email,
+                    CreationDate = user.DateOfCreation,
+                    Role = user.RoleName,
+                    Address = user.Address
+                };
+
+                return Ok(accountViewModel);
+            }
+
+            if (result.IsSuccess)
             {
                 return Ok("User registered successfully");
             }
 
-            foreach (var error in result.Errors)
-            {
-                ModelState.AddModelError(string.Empty, error.Description);
-            }
-
-            return BadRequest(ModelState);
+            return BadRequest(result.ErrorMessage);
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginDTO loginDTO)
+        public async Task<IActionResult> Login([FromBody] LoginBuildingModel loginModel)
         {
-            if (loginDTO == null || string.IsNullOrEmpty(loginDTO.Email) || string.IsNullOrEmpty(loginDTO.Password))
+            if (loginModel == null || string.IsNullOrEmpty(loginModel.Email) || string.IsNullOrEmpty(loginModel.Password))
             {
                 return BadRequest("Invalid login details");
             }
 
-            var user = await _userManager.FindByEmailAsync(loginDTO.Email);
-            if (user == null)
+            var loginDTO = new LoginDTO
             {
-                return Unauthorized("Invalid login attempt");
+                Email = loginModel.Email,
+                Password = loginModel.Password
+            };
+
+            ServiceResultDTO<ApplicationUserDTO> result = await _accountService.LoginAsync(loginDTO);
+            if (result.IsSuccess)
+            {
+                var user = result.Data as ApplicationUserDTO;
+                if (user == null)
+                {
+                    return Unauthorized("Invalid user data");
+                }
+
+                var roleName = user.RoleName ?? "User"; // Fetching role name from result if available
+                var cookieOptions = new CookieOptions
+                {
+                    HttpOnly = true,
+                    Expires = DateTime.UtcNow.AddDays(7)
+                };
+                Response.Cookies.Append("RoleName", roleName, cookieOptions);
+
+                var accountViewModel = new AccountViewModel
+                {
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    Email = user.Email,
+                    CreationDate = user.DateOfCreation,
+                    Role = roleName
+                };
+
+                return Ok(accountViewModel);
             }
 
-            var result = await _signInManager.PasswordSignInAsync(user.UserName, loginDTO.Password, false, false);
-            if (result.Succeeded)
+            return Unauthorized(result.ErrorMessage);
+        }
+
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            await _accountService.LogoutAsync();
+            // Clear user data from cookies
+            if (Request.Cookies.ContainsKey("RoleName"))
             {
-                return Ok("User logged in successfully");
+                Response.Cookies.Delete("RoleName");
             }
 
-            return Unauthorized("Invalid login attempt");
+            return Ok("User logged out successfully");
         }
     }
 }

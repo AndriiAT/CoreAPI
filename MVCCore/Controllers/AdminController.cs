@@ -4,6 +4,7 @@ using Persistance.DTOs;
 using Persistance.DTOs.Accounts;
 using Persistance.Repositories;
 using Persistance.Repositories.Accounts;
+using Persistance.Services.Accounts;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -14,30 +15,36 @@ namespace MVCCore.Controllers
     [Route("[controller]")]
     public class AdminController : ControllerBase
     {
-        private readonly IUserRepository _userRepository;
+        private readonly IAccountService _accountService;
 
-        public AdminController(IUserRepository userRepository)
+        public AdminController(IAccountService accountService)
         {
-            _userRepository = userRepository;
+            _accountService = accountService;
         }
 
         [HttpGet("all-users")]
         public async Task<ActionResult<IEnumerable<ApplicationUserDTO>>> GetUsers()
         {
-            var users = await _userRepository.ReadAllAsync();
+            var users = await _accountService.GetAllUsersAsync();
             return Ok(users);
         }
 
         [HttpPost("create")]
-        public async Task<ActionResult> CreateUser([FromBody] ApplicationUserDTO newUser)
+        public async Task<ActionResult> CreateUser([FromBody] RegisterDTO newUser)
         {
             if (newUser == null || string.IsNullOrEmpty(newUser.FirstName) || string.IsNullOrEmpty(newUser.LastName))
             {
                 return BadRequest("User details cannot be empty");
             }
 
-            var createdUser = await _userRepository.CreateAsync(newUser);
-            return Ok(createdUser);
+            var result = await _accountService.RegisterAsync(newUser);
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result.ErrorMessage);
+            }
+
+            return Ok(result.Data);
         }
 
         [HttpDelete("delete/{id}")]
@@ -48,7 +55,13 @@ namespace MVCCore.Controllers
                 return BadRequest("User ID cannot be empty");
             }
 
-            await _userRepository.DeleteAsync(id);
+            var result = await _accountService.DeleteUserAsync(id);
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result.ErrorMessage);
+            }
+
             return Ok($"User with ID {id} deleted successfully");
         }
     }

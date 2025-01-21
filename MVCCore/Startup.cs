@@ -8,6 +8,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Persistance.Extensions;
+using System.Linq;
+using System.Reflection;
 
 namespace MVCCore
 {
@@ -24,21 +26,33 @@ namespace MVCCore
         {
             services.AddControllers();
             services.AddEndpointsApiExplorer();
+
             // Add Swagger
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "API", Version = "v1" });
-                //c.SwaggerDoc("admin", new OpenApiInfo { Title = "Admin API", Version = "v1" });
+                // Get all controllers
+                var controllers = Assembly.GetExecutingAssembly().GetTypes()
+                    .Where(type => typeof(Microsoft.AspNetCore.Mvc.ControllerBase).IsAssignableFrom(type) && !type.IsAbstract)
+                    .ToList();
 
-                //// Optionally, you can add custom logic to include/exclude endpoints in each document
-                //c.DocInclusionPredicate((docName, apiDesc) =>
-                //{
-                //    if (docName == "admin")
-                //    {
-                //        return apiDesc.RelativePath.StartsWith("admin/");
-                //    }
-                //    return !apiDesc.RelativePath.StartsWith("admin/");
-                //});
+                // Create a Swagger document for each controller
+                foreach (var controller in controllers)
+                {
+                    var controllerName = controller.Name.Replace("Controller", string.Empty);
+                    c.SwaggerDoc(controllerName.ToLower(), new OpenApiInfo { Title = $"{controllerName} API", Version = "v1" });
+                }
+
+                // Optionally, you can add custom logic to include/exclude endpoints in each document
+                c.DocInclusionPredicate((docName, apiDesc) =>
+                {
+                    var controllerActionDescriptor = apiDesc.ActionDescriptor as Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor;
+                    if (controllerActionDescriptor != null)
+                    {
+                        var controllerName = controllerActionDescriptor.ControllerName.ToLower();
+                        return docName == controllerName;
+                    }
+                    return false;
+                });
             });
 
             services.AddPersistance(Configuration);
@@ -85,11 +99,20 @@ namespace MVCCore
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "API V1");
-                //c.SwaggerEndpoint("/swagger/admin/swagger.json", "Admin API V1");
+                // Get all controllers
+                var controllers = Assembly.GetExecutingAssembly().GetTypes()
+                    .Where(type => typeof(Microsoft.AspNetCore.Mvc.ControllerBase).IsAssignableFrom(type) && !type.IsAbstract)
+                    .ToList();
 
-                //// Optionally, you can set custom route prefixes
-                //c.RoutePrefix = string.Empty; // Set to empty string to serve Swagger UI at the app's root
+                // Create a Swagger endpoint for each controller
+                foreach (var controller in controllers)
+                {
+                    var controllerName = controller.Name.Replace("Controller", string.Empty);
+                    c.SwaggerEndpoint($"/swagger/{controllerName.ToLower()}/swagger.json", $"{controllerName} API V1");
+                }
+
+                // Optionally, you can set custom route prefixes
+                // c.RoutePrefix = string.Empty; // Set to empty string to serve Swagger UI at the app's root
             });
 
             app.UseEndpoints(endpoints =>

@@ -12,6 +12,8 @@ using Persistance.Repositories.Accounts;
 using Persistance.Repositories.Orders;
 using Persistance.Repositories.Products;
 using Persistance.Services;
+using Persistance.Services.Accounts;
+using ProductsShop.Repositories.Accounts;
 using System.Text;
 using IdentityDbContext = Persistance.Context.IdentityDbContext;
 
@@ -71,8 +73,10 @@ namespace Persistance.Extensions
             services.AddScoped<IProductRepository, ProductRepository>();
             services.AddScoped<IOrderRepository, OrderRepository>();
             services.AddScoped<IOrderedProductRepository, OrderedProductRepository>();
-            services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IRoleRepository, RoleRepository>();
+            // Register custom services
+            services.AddScoped<IAccountService, AccountService>();
+            services.AddScoped<IAccountRepository, AccountRepository>();
 
             services.AddSingleton<IListsComparer, ListsComparer>();
 

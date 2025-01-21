@@ -1,19 +1,38 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Persistance.DTOs;
+﻿using Persistance.DTOs;
 using Persistance.DTOs.Accounts;
 using Persistance.Models;
 using Persistance.Services.Accounts;
-using System.Threading.Tasks;
+using ProductsShop.Repositories.Accounts;
+using System.Runtime.CompilerServices;
 
 internal class AccountService : IAccountService
 {
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly RoleManager<ApplicationRole> _roleManager;
+    private readonly IAccountRepository _accountRepository;
 
-    public AccountService(UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager)
+    public AccountService(IAccountRepository accountRepository)
     {
-        _userManager = userManager;
-        _roleManager = roleManager;
+        _accountRepository = accountRepository;
+    }
+
+    public async Task<ServiceResultDTO<IEnumerable<ApplicationUserDTO>>> GetAllUsersAsync()
+    {
+        var result = await _accountRepository.GetAllAsync();
+
+        if (!result.IsSuccess)
+        {
+            return new ServiceResultDTO<IEnumerable<ApplicationUserDTO>>
+            {
+                IsSuccess = false,
+                ErrorMessage = result.ErrorMessage,
+                ErrorCode = result.ErrorCode
+            };
+        }
+
+        return new ServiceResultDTO<IEnumerable<ApplicationUserDTO>>
+        {
+            IsSuccess = true,
+            Data = result.Data
+        };
     }
 
     public async Task<ServiceResultDTO<ApplicationUserDTO>> RegisterAsync(RegisterDTO registerDTO)
@@ -26,55 +45,79 @@ internal class AccountService : IAccountService
             LastName = registerDTO.LastName
         };
 
-        var result = await _userManager.CreateAsync(user, registerDTO.Password);
-        if (result.Succeeded)
-        {
-            if (!string.IsNullOrEmpty(registerDTO.RoleId))
-            {
-                var role = await _roleManager.FindByIdAsync(registerDTO.RoleId);
-                if (role != null)
-                {
-                    await _userManager.AddToRoleAsync(user, role.Name);
-                }
-            }
+        var result = await _accountRepository.CreateAsync(registerDTO);
 
+        if (!result.IsSuccess)
+        {
             return new ServiceResultDTO<ApplicationUserDTO>
             {
-                IsSuccess = true,
-                Data = new ApplicationUserDTO
-                {
-                    Id = user.Id,
-                    FirstName = user.FirstName,
-                    LastName = user.LastName,
-                    Email = user.Email,
-                    DateOfCreation = user.DateOfCreation,
-                }
+                IsSuccess = false,
+                ErrorMessage = result.ErrorMessage,
+                ErrorCode = result.ErrorCode
             };
         }
 
         return new ServiceResultDTO<ApplicationUserDTO>
         {
-            IsSuccess = false,
-            ErrorMessage = string.Join(", ", result.Errors.Select(e => e.Description))
+            IsSuccess = true,
+            Data = result.Data
         };
     }
 
-    public async Task<ServiceResultDTO<string>> LoginAsync(LoginDTO loginDTO)
+    public async Task<ServiceResultDTO<ApplicationUserDTO>> LoginAsync(LoginDTO loginDTO)
     {
-        var user = await _userManager.FindByEmailAsync(loginDTO.Email);
-        if (user != null && await _userManager.CheckPasswordAsync(user, loginDTO.Password))
+        var user = await _accountRepository.LoginAsync(loginDTO);
+        if (user != null)
+        {
+            return user;
+        }
+
+        return new ServiceResultDTO<ApplicationUserDTO>
+        {
+            IsSuccess = false,
+            ErrorMessage = "Invalid login attempt"
+        };
+    }
+
+    public async Task<ServiceResultDTO<string>> LogoutAsync()
+    {
+        var result = await _accountRepository.LogoutAsync();
+
+        if (!result.IsSuccess)
         {
             return new ServiceResultDTO<string>
             {
-                IsSuccess = true,
-                Data = "Login successful"
+                IsSuccess = false,
+                ErrorMessage = result.ErrorMessage,
+                ErrorCode = result.ErrorCode
             };
         }
 
         return new ServiceResultDTO<string>
         {
-            IsSuccess = false,
-            ErrorMessage = "Invalid login attempt"
+            IsSuccess = true,
+            Data = result.Data
+        };
+    }
+
+    public async Task<ServiceResultDTO<string>> DeleteUserAsync(string email)
+    {
+        var result = await _accountRepository.RemoveAsync(email);
+
+        if (!result.IsSuccess)
+        {
+            return new ServiceResultDTO<string>
+            {
+                IsSuccess = false,
+                ErrorMessage = result.ErrorMessage,
+                ErrorCode = result.ErrorCode
+            };
+        }
+
+        return new ServiceResultDTO<string>
+        {
+            IsSuccess = true,
+            Data = "User deleted successfully"
         };
     }
 }

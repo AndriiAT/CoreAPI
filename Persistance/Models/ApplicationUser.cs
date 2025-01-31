@@ -2,7 +2,7 @@
 
 namespace Persistance.Models
 {
-    public class ApplicationUser : IdentityUser
+    internal class ApplicationUser : IdentityUser
     {
         public string FirstName { get; set; }
         public string LastName { get; set; }

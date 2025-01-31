@@ -11,9 +11,9 @@ using Persistance.Context;
 
 namespace Persistance.Migrations
 {
-    [DbContext(typeof(IdentityDbContext))]
-    [Migration("20250121194625_UpdateModels")]
-    partial class UpdateModels
+    [DbContext(typeof(ShopDbContext))]
+    [Migration("20250124180902_UpdateDefaultsData")]
+    partial class UpdateDefaultsData
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -114,8 +114,18 @@ namespace Persistance.Migrations
                     b.HasData(
                         new
                         {
-                            UserId = "admin-user-id",
+                            UserId = "5ceb01cf-723b-4713-8294-7631fd246703",
                             RoleId = "admin-role-id"
+                        },
+                        new
+                        {
+                            UserId = "48597bad-e225-4665-ab56-4a124c5997f1",
+                            RoleId = "user-role-id"
+                        },
+                        new
+                        {
+                            UserId = "0304213c-d14f-41a9-ab04-0fe7c35cd3cf",
+                            RoleId = "manager-role-id"
                         });
                 });
 
@@ -177,11 +187,29 @@ namespace Persistance.Migrations
                         new
                         {
                             Id = "admin-role-id",
-                            CreationDate = new DateTime(2025, 1, 21, 19, 46, 24, 754, DateTimeKind.Utc).AddTicks(5947),
+                            CreationDate = new DateTime(2025, 1, 24, 18, 9, 1, 902, DateTimeKind.Utc).AddTicks(5911),
                             Description = "Administrator role",
                             ModifiedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Name = "Admin",
                             NormalizedName = "ADMIN"
+                        },
+                        new
+                        {
+                            Id = "user-role-id",
+                            CreationDate = new DateTime(2025, 1, 24, 18, 9, 1, 902, DateTimeKind.Utc).AddTicks(5915),
+                            Description = "User role",
+                            ModifiedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "User",
+                            NormalizedName = "USER"
+                        },
+                        new
+                        {
+                            Id = "manager-role-id",
+                            CreationDate = new DateTime(2025, 1, 24, 18, 9, 1, 902, DateTimeKind.Utc).AddTicks(5918),
+                            Description = "Manager role",
+                            ModifiedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Manager",
+                            NormalizedName = "MANAGER"
                         });
                 });
 
@@ -270,24 +298,253 @@ namespace Persistance.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "admin-user-id",
+                            Id = "5ceb01cf-723b-4713-8294-7631fd246703",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "575726f8-d40b-456b-9020-e988aaca0804",
+                            ConcurrencyStamp = "ca45eb76-02a8-49e6-82ff-69281888d7d9",
                             DateOfCreation = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "admin@example.com",
                             EmailConfirmed = true,
                             FirstName = "Admin",
                             LastModifiedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            LastName = "User",
+                            LastName = "Test",
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@EXAMPLE.COM",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAELfOvMT4IC3AK9doxvA7Yx0bZrzujOxPmhQWeMFug1OoXr96x03BIAs5t6zkdbakxA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEPCCi6vRnkqKIr4ZFfDzMZHs3QwrZGPQgr4LjOsBtO5so8Rv7uqExUdzat1UkrWh5g==",
                             PhoneNumberConfirmed = false,
+                            RoleName = "Admin",
                             SecurityStamp = "",
                             TwoFactorEnabled = false,
                             UserName = "admin"
+                        },
+                        new
+                        {
+                            Id = "48597bad-e225-4665-ab56-4a124c5997f1",
+                            AccessFailedCount = 0,
+                            ConcurrencyStamp = "158128bc-b798-4640-bff3-48cdbb4b821d",
+                            DateOfCreation = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Email = "user@example.com",
+                            EmailConfirmed = true,
+                            FirstName = "User",
+                            LastModifiedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            LastName = "Test",
+                            LockoutEnabled = false,
+                            NormalizedEmail = "USER@EXAMPLE.COM",
+                            NormalizedUserName = "USER",
+                            PasswordHash = "AQAAAAIAAYagAAAAEOCEe0XftqlG53ilBdqY9+h3taJXv29yj887Ye7W6oi0rPeS3UNBSs4UmllwUpY91Q==",
+                            PhoneNumberConfirmed = false,
+                            RoleName = "User",
+                            SecurityStamp = "",
+                            TwoFactorEnabled = false,
+                            UserName = "user"
+                        },
+                        new
+                        {
+                            Id = "0304213c-d14f-41a9-ab04-0fe7c35cd3cf",
+                            AccessFailedCount = 0,
+                            ConcurrencyStamp = "9b0535bb-0487-4545-b624-8b75b5bc9bc2",
+                            DateOfCreation = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Email = "manager@example.com",
+                            EmailConfirmed = true,
+                            FirstName = "Manager",
+                            LastModifiedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            LastName = "Test",
+                            LockoutEnabled = false,
+                            NormalizedEmail = "MANAGER@EXAMPLE.COM",
+                            NormalizedUserName = "MANAGER",
+                            PasswordHash = "AQAAAAIAAYagAAAAEMS+vedx3USTIAv/5cEuCIqpwbWpg3+JUgob03GV/rFtvP24z+uR93UDUQCWRrhmPw==",
+                            PhoneNumberConfirmed = false,
+                            RoleName = "Manager",
+                            SecurityStamp = "",
+                            TwoFactorEnabled = false,
+                            UserName = "manager"
                         });
+                });
+
+            modelBuilder.Entity("Persistance.Models.Order", b =>
+                {
+                    b.Property<string>("OrderId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("AddDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ModifiedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("OrderId");
+
+                    b.ToTable("Orders");
+                });
+
+            modelBuilder.Entity("Persistance.Models.OrderedProduct", b =>
+                {
+                    b.Property<string>("OrderedProductId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("Count")
+                        .HasColumnType("int");
+
+                    b.Property<string>("OrderId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("ProductId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("OrderedProductId");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("OrderedProducts");
+                });
+
+            modelBuilder.Entity("Persistance.Models.Product", b =>
+                {
+                    b.Property<string>("ProductId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("ProductId");
+
+                    b.ToTable("Products");
+
+                    b.HasData(
+                        new
+                        {
+                            ProductId = "6066e4cf-1029-4370-93df-bb215cccba40",
+                            Description = "Description for Phone",
+                            Name = "Phone",
+                            Price = 150m
+                        },
+                        new
+                        {
+                            ProductId = "2bf8d00e-dde9-4208-9420-2da2b58dffd7",
+                            Description = "Description for IPhone",
+                            Name = "IPhone",
+                            Price = 350m
+                        },
+                        new
+                        {
+                            ProductId = "04271915-cf81-435e-8cf5-f0e26b202ac3",
+                            Description = "Description for Android Phone",
+                            Name = "Android Phone",
+                            Price = 250m
+                        },
+                        new
+                        {
+                            ProductId = "6b600f3a-2a98-4135-b4d8-97a38c7acdc2",
+                            Description = "Description for Android used",
+                            Name = "Android used",
+                            Price = 50m
+                        },
+                        new
+                        {
+                            ProductId = "552c4976-e0bb-4080-86f9-1e701257e990",
+                            Description = "Description for HP PC",
+                            Name = "HP PC",
+                            Price = 1500m
+                        },
+                        new
+                        {
+                            ProductId = "173a2027-75c4-4b88-ba7d-9eebc5a45eee",
+                            Description = "Description for Notebook",
+                            Name = "Notebook",
+                            Price = 8500m
+                        },
+                        new
+                        {
+                            ProductId = "7fbbe7bc-c846-4311-91f0-982c16127fd4",
+                            Description = "Description for Head Phones",
+                            Name = "Head Phones",
+                            Price = 50m
+                        },
+                        new
+                        {
+                            ProductId = "f688443e-bd08-48cb-b508-e3cf4f4f506b",
+                            Description = "Description for Mouse",
+                            Name = "Mouse",
+                            Price = 20m
+                        },
+                        new
+                        {
+                            ProductId = "e8d7532d-bd26-479f-adb2-cea026da152a",
+                            Description = "Description for Monitor 24",
+                            Name = "Monitor 24",
+                            Price = 175m
+                        },
+                        new
+                        {
+                            ProductId = "b9d1ba24-c574-45f9-b86f-3b12d8b43b6a",
+                            Description = "Description for Monitor 27",
+                            Name = "Monitor 27",
+                            Price = 230m
+                        });
+                });
+
+            modelBuilder.Entity("Persistance.Models.ServiceResultLog", b =>
+                {
+                    b.Property<string>("LogId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ErrorCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MethodName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("LogId");
+
+                    b.ToTable("ServiceResultLogs");
+                });
+
+            modelBuilder.Entity("Persistance.Models.UserLoginLog", b =>
+                {
+                    b.Property<string>("LogId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsSuccess")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("LogId");
+
+                    b.ToTable("UserLoginLogs");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -339,6 +596,26 @@ namespace Persistance.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Persistance.Models.OrderedProduct", b =>
+                {
+                    b.HasOne("Persistance.Models.Order", "Order")
+                        .WithMany("OrderedProducts")
+                        .HasForeignKey("OrderId");
+
+                    b.HasOne("Persistance.Models.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId");
+
+                    b.Navigation("Order");
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("Persistance.Models.Order", b =>
+                {
+                    b.Navigation("OrderedProducts");
                 });
 #pragma warning restore 612, 618
         }

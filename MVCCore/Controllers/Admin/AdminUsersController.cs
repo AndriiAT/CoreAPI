@@ -1,28 +1,25 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Persistance.DTOs;
 using Persistance.DTOs.Accounts;
-using Persistance.Repositories;
-using Persistance.Repositories.Accounts;
 using Persistance.Services.Accounts;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace MVCCore.Controllers
+namespace MVCCore.Controllers.Admin
 {
-    [Authorize]
+    [Authorize(Roles = "Admin,Manager")]
     [ApiController]
     [Route("[controller]")]
-    public class AdminController : ControllerBase
+    public class AdminUsersController : ControllerBase
     {
         private readonly IAccountService _accountService;
 
-        public AdminController(IAccountService accountService)
+        public AdminUsersController(IAccountService accountService)
         {
             _accountService = accountService;
         }
 
-        [HttpGet("all-users")]
+        [HttpGet("users")]
         public async Task<ActionResult<IEnumerable<ApplicationUserDTO>>> GetUsers()
         {
             var users = await _accountService.GetAllUsersAsync();
@@ -37,7 +34,7 @@ namespace MVCCore.Controllers
                 return BadRequest("User details cannot be empty");
             }
 
-            var result = await _accountService.RegisterAsync(newUser);
+            var result = await _accountService.RegisterUserAsync(newUser);
 
             if (!result.IsSuccess)
             {
@@ -45,6 +42,19 @@ namespace MVCCore.Controllers
             }
 
             return Ok(result.Data);
+        }
+
+        [HttpDelete("update")]
+        public async Task<ActionResult> UpdateUser([FromBody] RegisterDTO user)
+        {
+            var result = await _accountService.UpdateUserAsync(user);
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok($"User with ID {user} updated successfully");
         }
 
         [HttpDelete("delete/{id}")]

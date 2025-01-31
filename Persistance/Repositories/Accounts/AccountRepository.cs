@@ -1,20 +1,27 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Persistance.Context;
 using Persistance.DTOs;
 using Persistance.DTOs.Accounts;
 using Persistance.Models;
+using Persistance.Repositories.Accounts;
+using System.Data;
 
 namespace ProductsShop.Repositories.Accounts
 {
     internal class AccountRepository : IAccountRepository
     {
+
         public AccountRepository() { }
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly ShopDbContext _context;
+        private readonly IRoleRepository _roleRepository;
 
-        public AccountRepository(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
+        public AccountRepository(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, ShopDbContext context)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _context = context;
         }
 
         public async Task<bool> IsEmailRegistered(string email)
@@ -40,12 +47,44 @@ namespace ProductsShop.Repositories.Accounts
             return await _userManager.CheckPasswordAsync(user, password);
         }
 
-        public async Task<ServiceResultDTO<IEnumerable<ApplicationUserDTO>>> GetAllAsync()
+        public async Task<ServiceResultDTO<ApplicationUserDTO>> ReadByEmailAsync(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                return new ServiceResultDTO<ApplicationUserDTO>
+                {
+                    IsSuccess = false,
+                    ErrorMessage = "User not found.",
+                    ErrorCode = "UserNotFound"
+                };
+            }
+
+            var userDto = new ApplicationUserDTO
+            {
+                UserId = user.Id,
+                Email = user.Email,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                DateOfCreation = user.DateOfCreation,
+                LastModifiedDate = user.LastModifiedDate,
+                RoleName = user.RoleName,
+                Address = user.Address
+            };
+
+            return new ServiceResultDTO<ApplicationUserDTO>
+            {
+                IsSuccess = true,
+                Data = userDto
+            };
+        }
+
+        public async Task<ServiceResultDTO<IEnumerable<ApplicationUserDTO>>> ReadAllAsync()
         {
             var users = await Task.Run(() => _userManager.Users.ToList());
-            var userDtos = users.Select(user => new ApplicationUserDTO
+            IEnumerable<ApplicationUserDTO> userDtos = users.Select(user => new ApplicationUserDTO
             {
-                Id = user.Id,
+                UserId = user.Id,
                 Email = user.Email,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
@@ -62,7 +101,7 @@ namespace ProductsShop.Repositories.Accounts
             };
         }
 
-        public async Task<ServiceResultDTO<ApplicationUserDTO>> CreateAsync(RegisterDTO registerDTO)
+        public async Task<ServiceResultDTO<ApplicationUserDTO>> CreateAccountAsync(RegisterDTO registerDTO)
         {
             if (await IsEmailRegistered(registerDTO.Email))
             {
@@ -74,19 +113,9 @@ namespace ProductsShop.Repositories.Accounts
                 };
             }
 
-            //var roles = await _userManager.GetRolesAsync();
-            //if (!roles.Contains(registerDTO.RoleName))
-            //{
-            //    return new ServiceResultDTO<ApplicationUserDTO>
-            //    {
-            //        IsSuccess = false,
-            //        ErrorMessage = "Role does not exist.",
-            //        ErrorCode = "RoleNotFound"
-            //    };
-            //}
-
             var user = new ApplicationUser
             {
+                AccessFailedCount = 0,
                 UserName = registerDTO.Email,
                 Email = registerDTO.Email,
                 FirstName = registerDTO.FirstName,
@@ -96,6 +125,17 @@ namespace ProductsShop.Repositories.Accounts
                 RoleName = registerDTO.RoleName,
                 Address = registerDTO.Address
             };
+
+            var roles = await _userManager.GetRolesAsync(user);
+            if (!roles.Contains(registerDTO.RoleName))
+            {
+                return new ServiceResultDTO<ApplicationUserDTO>
+                {
+                    IsSuccess = false,
+                    ErrorMessage = "Role does not exist.",
+                    ErrorCode = "RoleNotFound"
+                };
+            }
 
             var result = await _userManager.CreateAsync(user, registerDTO.Password);
 
@@ -113,7 +153,7 @@ namespace ProductsShop.Repositories.Accounts
 
             var userDto = new ApplicationUserDTO
             {
-                Id = user.Id,
+                UserId = user.Id,
                 Email = user.Email,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
@@ -130,7 +170,7 @@ namespace ProductsShop.Repositories.Accounts
             };
         }
 
-        public async Task<ServiceResultDTO<ApplicationUserDTO>> LoginAsync(LoginDTO loginDTO)
+        public async Task<ServiceResultDTO<ApplicationUserDTO>> LoginUserAsync(LoginDTO loginDTO)
         {
             var user = await _userManager.FindByEmailAsync(loginDTO.Email);
             if (user == null)
@@ -143,9 +183,12 @@ namespace ProductsShop.Repositories.Accounts
                 };
             }
 
+
             var result = await _signInManager.PasswordSignInAsync(user, loginDTO.Password, isPersistent: false, lockoutOnFailure: false);
             if (!result.Succeeded)
             {
+                await LogLoginAttemptAsync(loginDTO.Email, true, null);
+
                 return new ServiceResultDTO<ApplicationUserDTO>
                 {
                     IsSuccess = false,
@@ -156,7 +199,7 @@ namespace ProductsShop.Repositories.Accounts
 
             var userDto = new ApplicationUserDTO
             {
-                Id = user.Id,
+                UserId = user.Id,
                 Email = user.Email,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
@@ -173,7 +216,106 @@ namespace ProductsShop.Repositories.Accounts
             };
         }
 
-        public async Task<ServiceResultDTO<string>> RemoveAsync(string email)
+        private async Task LogLoginAttemptAsync(string email, bool isSuccess, string errorMessage)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            var log = new UserLoginLog
+            {
+                LogId = Guid.NewGuid().ToString(),
+                UserId = user?.Id,
+                Email = email,
+                IsSuccess = isSuccess,
+                ErrorMessage = errorMessage,
+                Timestamp = DateTime.UtcNow
+            };
+            _context.UserLoginLogs.Add(log);
+            await _context.SaveChangesAsync();
+        }
+
+        public AccountRepository(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, ShopDbContext context, IRoleRepository roleRepository)
+        {
+            _userManager = userManager;
+            _signInManager = signInManager;
+            _context = context;
+            _roleRepository = roleRepository;
+        }
+
+        public async Task<ServiceResultDTO<ApplicationUserDTO>> UpdateAccountAsync(RegisterDTO existingUser)
+        {
+            var user = await _userManager.FindByEmailAsync(existingUser.Email);
+            if (user == null)
+            {
+                return new ServiceResultDTO<ApplicationUserDTO>
+                {
+                    IsSuccess = false,
+                    ErrorMessage = "User not found.",
+                    ErrorCode = "UserNotFound"
+                };
+            }
+            if (existingUser.FirstName != null && existingUser.FirstName != user.FirstName)
+            {
+                user.FirstName = existingUser.FirstName;
+            }
+            if (existingUser.LastName != null && existingUser.LastName != user.LastName)
+            {
+                user.LastName = existingUser.LastName;
+            }
+            if (existingUser.RoleName != null && existingUser.RoleName != user.RoleName)
+            {
+                user.RoleName = existingUser.RoleName;
+            }
+            if (existingUser.Address != null && existingUser.Address != user.Address)
+            {
+                user.Address = existingUser.Address;
+            }
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                var roleExists = await _roleRepository.IsRoleRegistered(existingUser.RoleName);
+                if (!roleExists.IsSuccess)
+                {
+                    var newRole = new ApplicationRoleDTO
+                    {
+                        Name = user.RoleName,
+                        Description = $"{user.RoleName} Role",
+                    };
+                    var roleResult = await _roleRepository.CreateRoleAsync(newRole);
+                    if (!roleResult.IsSuccess)
+                    {
+                        return new ServiceResultDTO<ApplicationUserDTO>
+                        {
+                            IsSuccess = false,
+                            ErrorMessage = "Role creation failed.",
+                            ErrorCode = "RoleCreationFailed"
+                        };
+                    }
+                }
+                return new ServiceResultDTO<ApplicationUserDTO>
+                {
+                    IsSuccess = false,
+                    ErrorMessage = string.Join(", ", result.Errors.Select(e => e.Description)),
+                    ErrorCode = "UserUpdateFailed"
+                };
+            }
+            var userDto = new ApplicationUserDTO
+            {
+                UserId = user.Id,
+                Email = user.Email,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                DateOfCreation = user.DateOfCreation,
+                LastModifiedDate = user.LastModifiedDate,
+                RoleName = user.RoleName,
+                Address = user.Address
+            };
+            return new ServiceResultDTO<ApplicationUserDTO>
+            {
+                IsSuccess = true,
+                Data = userDto
+            };
+        }
+
+        public async Task<ServiceResultDTO<string>> RemoveAccountByEmailAsync(string email)
         {
             var user = await _userManager.FindByEmailAsync(email);
             if (user == null)
@@ -218,7 +360,7 @@ namespace ProductsShop.Repositories.Accounts
             };
         }
 
-        public async Task<ServiceResultDTO<string>> LogoutAsync()
+        public async Task<ServiceResultDTO<string>> LogoutUserAsync()
         {
             try
             {

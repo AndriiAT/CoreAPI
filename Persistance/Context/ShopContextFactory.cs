@@ -1,12 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
-using Microsoft.EntityFrameworkCore.SqlServer;
 using Microsoft.Extensions.Logging;
 
 namespace Persistance.Context
 {
-    internal class ShopContextFactory : IDesignTimeDbContextFactory<ShopContext>
+    internal class ShopContextFactory : IDesignTimeDbContextFactory<ShopDbContext>
     {
         private readonly IConfiguration _configuration;
 
@@ -17,16 +16,16 @@ namespace Persistance.Context
                 .Build();
         }
 
-        public ShopContext CreateDbContext(string[] args)
+        public ShopDbContext CreateDbContext(string[] args)
         {
             string connectionString = _configuration.GetConnectionString("DefaultConnection");
-            var optionsBuilder = new DbContextOptionsBuilder<ShopContext>();
+            var optionsBuilder = new DbContextOptionsBuilder<ShopDbContext>();
             optionsBuilder
                 .UseSqlServer(connectionString)
                 .LogTo(Console.WriteLine, LogLevel.Information)
                 .EnableSensitiveDataLogging();
 
-            return new ShopContext(optionsBuilder.Options);
+            return new ShopDbContext(optionsBuilder.Options);
         }
     }
 }

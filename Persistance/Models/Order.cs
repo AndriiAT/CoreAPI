@@ -4,7 +4,7 @@ namespace Persistance.Models
 {
     internal class Order
     {
-        public int Id { get; set; }
+        public string OrderId { get; set; }
         public string UserId { get; set; }
         public List<OrderedProduct> OrderedProducts { get; set; }
 

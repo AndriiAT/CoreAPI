@@ -1,15 +1,13 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Persistance.DTOs;
 using Persistance.DTOs.Accounts;
-using Persistance.Repositories;
 using Persistance.Repositories.Accounts;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace MVCCore.Controllers
+namespace MVCCore.Controllers.Admin
 {
-    [Authorize]
+    [Authorize(Roles = "Admin,Manager")]
     [ApiController]
     [Route("[controller]")]
     public class RolesController : ControllerBase
@@ -21,10 +19,10 @@ namespace MVCCore.Controllers
             _roleRepository = roleRepository;
         }
 
-        [HttpGet("all-roles")]
+        [HttpGet("roles")]
         public async Task<ActionResult<IEnumerable<ApplicationRoleDTO>>> GetRoles()
         {
-            var roles = await _roleRepository.ReadAllAsync();
+            var roles = await _roleRepository.ReadAllRolesAsync();
             return Ok(roles);
         }
 
@@ -36,7 +34,7 @@ namespace MVCCore.Controllers
                 return BadRequest("Role details cannot be empty");
             }
 
-            var createdRole = await _roleRepository.CreateAsync(newRole);
+            var createdRole = await _roleRepository.CreateRoleAsync(newRole);
             return Ok(createdRole);
         }
 
@@ -48,7 +46,7 @@ namespace MVCCore.Controllers
                 return BadRequest("Role ID cannot be empty");
             }
 
-            await _roleRepository.DeleteAsync(id);
+            await _roleRepository.DeleteRoleAsync(id);
             return Ok($"Role with ID {id} deleted successfully");
         }
     }

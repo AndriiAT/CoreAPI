@@ -10,14 +10,22 @@ using Microsoft.OpenApi.Models;
 using Persistance.Extensions;
 using System.Linq;
 using System.Reflection;
+using static Persistance.Extensions.ServiceCollectionExtension;
 
 namespace MVCCore
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        //// Seed roles and claims
+        //private readonly IRoleSeeder roleSeeder;
+        //// Seed users and claims
+        //private readonly IUserSeeder userSeeder;
+
+        public Startup(IConfiguration configuration) //, IRoleSeeder roleSeeder, IUserSeeder userSeeder
         {
             Configuration = configuration;
+            //this.roleSeeder = roleSeeder;
+            //this.userSeeder = userSeeder;
         }
 
         public IConfiguration Configuration { get; }
@@ -40,19 +48,19 @@ namespace MVCCore
                 {
                     var controllerName = controller.Name.Replace("Controller", string.Empty);
                     c.SwaggerDoc(controllerName.ToLower(), new OpenApiInfo { Title = $"{controllerName} API", Version = "v1" });
+                    // Optionally, you can add custom logic to include/exclude endpoints in each document
+                    c.DocInclusionPredicate((docName, apiDesc) =>
+                    {
+                        var controllerActionDescriptor = apiDesc.ActionDescriptor as Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor;
+                        if (controllerActionDescriptor != null)
+                        {
+                            var controllerName = controllerActionDescriptor.ControllerName.Replace("Controller", string.Empty);
+                            return docName == controllerName.ToLower();
+                        }
+                        return false;
+                    });
                 }
 
-                // Optionally, you can add custom logic to include/exclude endpoints in each document
-                c.DocInclusionPredicate((docName, apiDesc) =>
-                {
-                    var controllerActionDescriptor = apiDesc.ActionDescriptor as Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor;
-                    if (controllerActionDescriptor != null)
-                    {
-                        var controllerName = controllerActionDescriptor.ControllerName.ToLower();
-                        return docName == controllerName;
-                    }
-                    return false;
-                });
             });
 
             services.AddPersistance(Configuration);
@@ -66,6 +74,9 @@ namespace MVCCore
                     options.Cookie.HttpOnly = true;
                     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
                 });
+
+            services.AddAuthorization();
+            services.AddControllers();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -97,6 +108,11 @@ namespace MVCCore
 
             // Enable Swagger UI
             app.UseSwagger();
+            //app.UseSwaggerUI(c =>
+            //{
+            //    c.SwaggerEndpoint("/swagger/admin/swagger.json", "Admin API V1");
+            //    c.SwaggerEndpoint("/swagger/user/swagger.json", "User API V1");
+            //});
             app.UseSwaggerUI(c =>
             {
                 // Get all controllers
@@ -108,7 +124,9 @@ namespace MVCCore
                 foreach (var controller in controllers)
                 {
                     var controllerName = controller.Name.Replace("Controller", string.Empty);
-                    c.SwaggerEndpoint($"/swagger/{controllerName.ToLower()}/swagger.json", $"{controllerName} API V1");
+                    var isAdminController = controller.Namespace.Contains("Admin");
+                    var docName = isAdminController ? "admin" : controllerName.ToLower();
+                    c.SwaggerEndpoint($"/swagger/{docName}/swagger.json", $"{controllerName} API V1");
                 }
 
                 // Optionally, you can set custom route prefixes
@@ -125,6 +143,11 @@ namespace MVCCore
             {
                 context.Response.Redirect("/swagger");
             });
+
+            //// Seed roles and claims
+            //roleSeeder.SeedRolesAndClaims().Wait();
+            //// Seed users and claims
+            //userSeeder.SeedUsersAndClaims().Wait();
         }
     }
 }

@@ -3,10 +3,12 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace Persistance.Migrations
 {
     /// <inheritdoc />
-    public partial class RollBack : Migration
+    public partial class UpdateDefault : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -33,10 +35,12 @@ namespace Persistance.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Mail = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     FirstName = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     LastName = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     DateOfCreation = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    LastModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    RoleName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Address = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -55,6 +59,66 @@ namespace Persistance.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AspNetUsers", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Orders",
+                columns: table => new
+                {
+                    OrderId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    AddDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Orders", x => x.OrderId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Products",
+                columns: table => new
+                {
+                    ProductId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Price = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Products", x => x.ProductId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ServiceResultLogs",
+                columns: table => new
+                {
+                    LogId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    MethodName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ErrorMessage = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ErrorCode = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Timestamp = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ServiceResultLogs", x => x.LogId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UserLoginLogs",
+                columns: table => new
+                {
+                    LogId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Email = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Timestamp = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    IsSuccess = table.Column<bool>(type: "bit", nullable: false),
+                    ErrorMessage = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserLoginLogs", x => x.LogId);
                 });
 
             migrationBuilder.CreateTable(
@@ -163,20 +227,60 @@ namespace Persistance.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "OrderedProducts",
+                columns: table => new
+                {
+                    OrderedProductId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    OrderId = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    ProductId = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    Price = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Count = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OrderedProducts", x => x.OrderedProductId);
+                    table.ForeignKey(
+                        name: "FK_OrderedProducts_Orders_OrderId",
+                        column: x => x.OrderId,
+                        principalTable: "Orders",
+                        principalColumn: "OrderId");
+                    table.ForeignKey(
+                        name: "FK_OrderedProducts_Products_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Products",
+                        principalColumn: "ProductId");
+                });
+
             migrationBuilder.InsertData(
                 table: "AspNetRoles",
                 columns: new[] { "Id", "ConcurrencyStamp", "CreationDate", "Description", "ModifiedDate", "Name", "NormalizedName" },
-                values: new object[] { "admin-role-id", null, new DateTime(2025, 1, 18, 21, 45, 24, 332, DateTimeKind.Utc).AddTicks(8458), "Administrator role", new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Admin", "ADMIN" });
+                values: new object[,]
+                {
+                    { "admin-role-id", null, new DateTime(2025, 1, 24, 18, 1, 44, 905, DateTimeKind.Utc).AddTicks(24), "Administrator role", new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Admin", "ADMIN" },
+                    { "manager-role-id", null, new DateTime(2025, 1, 24, 18, 1, 44, 905, DateTimeKind.Utc).AddTicks(31), "Manager role", new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Manager", "MANAGER" },
+                    { "user-role-id", null, new DateTime(2025, 1, 24, 18, 1, 44, 905, DateTimeKind.Utc).AddTicks(29), "User role", new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "User", "USER" }
+                });
 
             migrationBuilder.InsertData(
                 table: "AspNetUsers",
-                columns: new[] { "Id", "AccessFailedCount", "ConcurrencyStamp", "DateOfCreation", "Email", "EmailConfirmed", "FirstName", "LastName", "LockoutEnabled", "LockoutEnd", "Mail", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "TwoFactorEnabled", "UserName" },
-                values: new object[] { "admin-user-id", 0, "ddddea86-2a3d-49f4-8531-15a826ee4550", new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "admin@example.com", true, "Admin", "User", false, null, null, "ADMIN@EXAMPLE.COM", "ADMIN", "AQAAAAIAAYagAAAAEClHY9dDjGef2imvzPd2tpYYkkH/Oy9DxtSULFw6BNkO5Ge+92wPoIltRX2D3/Pzmg==", null, false, "", false, "admin" });
+                columns: new[] { "Id", "AccessFailedCount", "Address", "ConcurrencyStamp", "DateOfCreation", "Email", "EmailConfirmed", "FirstName", "LastModifiedDate", "LastName", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "RoleName", "SecurityStamp", "TwoFactorEnabled", "UserName" },
+                values: new object[,]
+                {
+                    { "35910f40-5f2f-44d4-83a7-c77a279375dc", 0, null, "fa5a2f0a-d9ba-4d44-9080-d4e63140bd7e", new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "user@example.com", true, "User", new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Test", false, null, "USER@EXAMPLE.COM", "USER", "AQAAAAIAAYagAAAAEPC/oRjSe9AtWQ8TWwp2yRjWqzcElfCPX7dE1tb9zbAaP6zCFrQrZTOXM0J4wfXsZQ==", null, false, "User", "", false, "user" },
+                    { "81eb8672-a56f-4a06-9f3d-a97d387bda7e", 0, null, "299d9225-9973-40ae-aa13-a63daaf55842", new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "manager@example.com", true, "Manager", new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Test", false, null, "MANAGER@EXAMPLE.COM", "MANAGER", "AQAAAAIAAYagAAAAEEH+IqNcCCM/PAjtyMGbIwLsSQDjZAJ1RtxKxSH/cnv/ekHGL2hETh+WypQJOa5dJw==", null, false, "Manager", "", false, "manager" },
+                    { "8b5ba644-bdfb-4e80-920d-1d4177f64857", 0, null, "845bf2b7-2765-43a1-b397-c6b773e1ad5c", new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "admin@example.com", true, "Admin", new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Test", false, null, "ADMIN@EXAMPLE.COM", "ADMIN", "AQAAAAIAAYagAAAAEMhE+S0CgeCEb700lCxqGRt0KmH5owaaXxlu4ZjvGiQRPkpsWhIRTH8jkN+p6t6xMw==", null, false, "Admin", "", false, "admin" }
+                });
 
             migrationBuilder.InsertData(
                 table: "AspNetUserRoles",
                 columns: new[] { "RoleId", "UserId" },
-                values: new object[] { "admin-role-id", "admin-user-id" });
+                values: new object[,]
+                {
+                    { "user-role-id", "35910f40-5f2f-44d4-83a7-c77a279375dc" },
+                    { "manager-role-id", "81eb8672-a56f-4a06-9f3d-a97d387bda7e" },
+                    { "admin-role-id", "8b5ba644-bdfb-4e80-920d-1d4177f64857" }
+                });
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
@@ -216,6 +320,16 @@ namespace Persistance.Migrations
                 column: "NormalizedUserName",
                 unique: true,
                 filter: "[NormalizedUserName] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OrderedProducts_OrderId",
+                table: "OrderedProducts",
+                column: "OrderId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OrderedProducts_ProductId",
+                table: "OrderedProducts",
+                column: "ProductId");
         }
 
         /// <inheritdoc />
@@ -237,10 +351,25 @@ namespace Persistance.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
+                name: "OrderedProducts");
+
+            migrationBuilder.DropTable(
+                name: "ServiceResultLogs");
+
+            migrationBuilder.DropTable(
+                name: "UserLoginLogs");
+
+            migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
+
+            migrationBuilder.DropTable(
+                name: "Orders");
+
+            migrationBuilder.DropTable(
+                name: "Products");
         }
     }
 }

@@ -25,7 +25,7 @@ namespace Persistance.DTOs.Orders
 
     public class OrderDTO
     {
-        public int Id { get; set; }
+        public string OrderId { get; set; }
         public string UserId { get; set; }
         public List<OrderedProductDTO> OrderedProducts { get; set; }
 

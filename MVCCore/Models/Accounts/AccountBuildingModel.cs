@@ -16,16 +16,16 @@ namespace MVCCore.Models.Accounts
 
         [Required]
         [JsonProperty("first_name")]
-        public string? FirstName { get; set; }
+        public string FirstName { get; set; }
 
         [Required]
         [JsonProperty("last_name")]
-        public string? LastName { get; set; }
+        public string LastName { get; set; }
 
         [JsonProperty("role")]
-        public string? Role { get; set; }
+        public string Role { get; set; }
         
         [JsonProperty("address")]
-        public string? Address { get; set; }
+        public string Address { get; set; }
     }
 }

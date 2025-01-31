@@ -1,16 +1,14 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using MVCCore.Models.Products;
-using Persistance.DTOs.Products;
 using Persistance.Repositories.Products;
 using System.Threading.Tasks;
 
 namespace ContosoUniversity.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Admin,Manager")]
     [ApiController]
     [Route("[controller]")]
-    public class ProductsController : Controller
+    public class ProductsController : ControllerBase
     {
         private readonly IProductRepository _productRepository;
 
@@ -21,89 +19,28 @@ namespace ContosoUniversity.Controllers
 
         // GET: api/products
         [HttpGet]
-        [Authorize(Roles = "Admin,Manager,User")]
         public async Task<IActionResult> GetProducts()
         {
-            var products = await _productRepository.ReadAllAsync();
-            if (products == null)
+            var products = await _productRepository.ReadAllProductsAsync();
+            if (!products.IsSuccess)
             {
-                return NotFound();
+                return NotFound($"error_Code: '{products.ErrorCode}', error_message: '{products.ErrorMessage}'");
             }
 
-            return Ok(products);
+            return Ok(products.Data);
         }
 
         // GET: api/products/5
         [HttpGet("{id}")]
-        [Authorize(Roles = "Admin,Manager,User")]
-        public async Task<IActionResult> GetProduct([FromRoute] int id)
+        public async Task<IActionResult> GetProduct([FromRoute] string id)
         {
-            var product = await _productRepository.ReadAsync(id);
-            if (product == null)
+            var product = await _productRepository.ReadProductAsync(id.ToString());
+            if (product.Data == null)
             {
-                return NotFound();
+                return NotFound($"Product with Id: {id} not found");
             }
 
-            return Ok(product);
-        }
-
-        // POST: api/products
-        [HttpPost]
-        [Authorize(Roles = "Admin,Manager")]
-        public async Task<IActionResult> CreateProduct([FromBody] ProductBuildingModel product)
-        {
-            var productDTO = new ProductDTO
-            {
-                Name = product.Name,
-                Price = product.Price,
-                Description = product.Description
-            };
-
-            var newProduct = await _productRepository.CreateAsync(productDTO);
-            return Ok(newProduct);
-        }
-
-        // PUT: api/products/5
-        /// <summary>
-        /// Updates an existing product.
-        /// </summary>
-        /// <param name="id">The ID of the product to update.</param>
-        /// <param name="product">The product data to update.</param>
-        /// <returns>The updated product.</returns>
-        [HttpPut("{id}")]
-        [Authorize(Roles = "Admin,Manager")]
-        public async Task<IActionResult> UpdateProduct([FromRoute] int id, [FromBody] ProductBuildingModel product)
-        {
-            var existingProduct = await _productRepository.ReadAsync(id);
-            if (existingProduct == null)
-            {
-                return NotFound();
-            }
-
-            var productDTO = new ProductDTO
-            {
-                ProductId = id,
-                Name = product.Name,
-                Price = product.Price,
-                Description = product.Description
-            };
-
-            var updatedProduct = await _productRepository.UpdateAsync(productDTO);
-            if (updatedProduct == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(updatedProduct);
-        }
-
-        // DELETE: api/products/5
-        [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin,Manager")]
-        public async Task<IActionResult> DeleteProduct([FromRoute] int id)
-        {
-            await _productRepository.DeleteAsync(id);
-            return NoContent();
+            return Ok(product.Data);
         }
     }
 }

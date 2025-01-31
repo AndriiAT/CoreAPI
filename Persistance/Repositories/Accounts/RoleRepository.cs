@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Persistance.DTOs;
 using Persistance.DTOs.Accounts;
 using Persistance.Models;
+using System.Data;
 
 namespace Persistance.Repositories.Accounts
 {
@@ -14,19 +16,33 @@ namespace Persistance.Repositories.Accounts
             _roleManager = roleManager;
         }
 
-        public async Task<ApplicationRoleDTO> CreateAsync(ApplicationRoleDTO role)
+        public async Task<ServiceResultDTO<bool>> IsRoleRegistered(string UserRole)
         {
-            var existingRoleById = await _roleManager.FindByIdAsync(role.Id);
+            var role = await _roleManager.FindByNameAsync(UserRole);
+            return new ServiceResultDTO<bool>
+            {
+                IsSuccess = role != null,
+                Data = role != null
+            };
+        }
+
+        public async Task<ServiceResultDTO<ApplicationRoleDTO>> CreateRoleAsync(ApplicationRoleDTO role)
+        {
+            var existingRoleById = await _roleManager.FindByIdAsync(role.RoleId);
             var existingRoleByName = await _roleManager.FindByNameAsync(role.Name);
 
             if (existingRoleById != null || existingRoleByName != null)
             {
-                return null; // Role with the same Id or Name already exists
+                return new ServiceResultDTO<ApplicationRoleDTO>
+                {
+                    IsSuccess = false,
+                    ErrorMessage = "Role with the same ProductId or Name already exists"
+                };
             }
 
             var identityRole = new ApplicationRole
             {
-                Id = string.IsNullOrEmpty(role.Id) ? Guid.NewGuid().ToString() : role.Id,
+                Id = $"{role.Name}-role-id",
                 Name = role.Name,
                 Description = role.Description,
                 CreationDate = DateTime.UtcNow,
@@ -36,43 +52,63 @@ namespace Persistance.Repositories.Accounts
 
             if (result.Succeeded)
             {
-                return new ApplicationRoleDTO
+                return new ServiceResultDTO<ApplicationRoleDTO>
                 {
-                    Id = identityRole.Id,
-                    Name = identityRole.Name,
-                    Description = role.Description,
-                    CreationDate = role.CreationDate,
-                    ModifiedDate = role.ModifiedDate
+                    IsSuccess = true,
+                    Data = new ApplicationRoleDTO
+                    {
+                        RoleId = identityRole.Id,
+                        Name = identityRole.Name,
+                        Description = role.Description,
+                        CreationDate = role.CreationDate,
+                        ModifiedDate = role.ModifiedDate
+                    }
                 };
             }
 
-            return null;
+            return new ServiceResultDTO<ApplicationRoleDTO>
+            {
+                IsSuccess = false,
+                ErrorMessage = "Failed to create role"
+            };
         }
 
-        public async Task<ApplicationRoleDTO> ReadAsync(string roleId)
+        public async Task<ServiceResultDTO<ApplicationRoleDTO>> ReadByIdAsync(string roleId)
         {
             var role = await _roleManager.FindByIdAsync(roleId);
             if (role == null)
             {
-                return null;
+                return new ServiceResultDTO<ApplicationRoleDTO>
+                {
+                    IsSuccess = false,
+                    ErrorMessage = "Role not found"
+                };
             }
 
-            return new ApplicationRoleDTO
+            return new ServiceResultDTO<ApplicationRoleDTO>
             {
-                Id = role.Id,
-                Name = role.Name,
-                Description = role.NormalizedName,
-                CreationDate = role.CreationDate,
-                ModifiedDate = role.ModifiedDate
+                IsSuccess = true,
+                Data = new ApplicationRoleDTO
+                {
+                    RoleId = role.Id,
+                    Name = role.Name,
+                    Description = role.NormalizedName,
+                    CreationDate = role.CreationDate,
+                    ModifiedDate = role.ModifiedDate
+                }
             };
         }
 
-        public async Task<ApplicationRoleDTO> UpdateAsync(ApplicationRoleDTO role)
+        public async Task<ServiceResultDTO<ApplicationRoleDTO>> UpdateRoleAsync(ApplicationRoleDTO role)
         {
-            var identityRole = await _roleManager.FindByIdAsync(role.Id);
+            var identityRole = await _roleManager.FindByIdAsync(role.RoleId);
             if (identityRole == null)
             {
-                return null;
+                return new ServiceResultDTO<ApplicationRoleDTO>
+                {
+                    IsSuccess = false,
+                    ErrorMessage = "Role not found"
+                };
             }
 
             identityRole.Name = role.Name;
@@ -83,38 +119,69 @@ namespace Persistance.Repositories.Accounts
 
             if (result.Succeeded)
             {
-                return new ApplicationRoleDTO
+                return new ServiceResultDTO<ApplicationRoleDTO>
                 {
-                    Id = identityRole.Id,
-                    Name = identityRole.Name,
-                    Description = identityRole.Description,
-                    CreationDate = identityRole.CreationDate,
-                    ModifiedDate = identityRole.ModifiedDate
+                    IsSuccess = true,
+                    Data = new ApplicationRoleDTO
+                    {
+                        RoleId = identityRole.Id,
+                        Name = identityRole.Name,
+                        Description = identityRole.Description,
+                        CreationDate = identityRole.CreationDate,
+                        ModifiedDate = identityRole.ModifiedDate
+                    }
                 };
             }
 
-            return null;
+            return new ServiceResultDTO<ApplicationRoleDTO>
+            {
+                IsSuccess = false,
+                ErrorMessage = "Failed to update role"
+            };
         }
 
-        public async Task DeleteAsync(string roleId)
+        public async Task<ServiceResultDTO<string>> DeleteRoleAsync(string roleId)
         {
             var role = await _roleManager.FindByIdAsync(roleId);
             if (role != null)
             {
-                await _roleManager.DeleteAsync(role);
+                var result = await _roleManager.DeleteAsync(role);
+                if (result.Succeeded)
+                {
+                    return new ServiceResultDTO<string>
+                    {
+                        IsSuccess = true,
+                        Data = roleId
+                    };
+                }
+                return new ServiceResultDTO<string>
+                {
+                    IsSuccess = false,
+                    ErrorMessage = "Failed to delete role"
+                };
             }
+            return new ServiceResultDTO<string>
+            {
+                IsSuccess = false,
+                ErrorMessage = "Role not found"
+            };
         }
 
-        public async Task<IEnumerable<ApplicationRoleDTO>> ReadAllAsync()
+        public async Task<ServiceResultDTO<IEnumerable<ApplicationRoleDTO>>> ReadAllRolesAsync()
         {
             var roles = await _roleManager.Roles.ToListAsync();
-            return roles.Select(role => new ApplicationRoleDTO
+            return new ServiceResultDTO<IEnumerable<ApplicationRoleDTO>>
             {
-                Id = role.Id,
-                Name = role.Name,
-                Description = role.NormalizedName,
-                CreationDate = role.CreationDate
-            });
+                IsSuccess = true,
+                Data = roles.Select(role => new ApplicationRoleDTO
+                {
+                    RoleId = role.Id,
+                    Name = role.Name,
+                    Description = role.NormalizedName,
+                    CreationDate = role.CreationDate,
+                    ModifiedDate = role.ModifiedDate
+                })
+            };
         }
     }
 }

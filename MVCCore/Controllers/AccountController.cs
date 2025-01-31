@@ -5,7 +5,6 @@ using Persistance.DTOs;
 using Persistance.DTOs.Accounts;
 using Persistance.Services.Accounts;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace MVCCore.Controllers
@@ -45,7 +44,7 @@ namespace MVCCore.Controllers
                 registerDTO.RoleName = "User";
 
 
-            var result = await _accountService.RegisterAsync(registerDTO);
+            var result = await _accountService.RegisterUserAsync(registerDTO);
             if (result.IsSuccess)
             {
                 var user = result.Data as ApplicationUserDTO;
@@ -56,7 +55,7 @@ namespace MVCCore.Controllers
 
                 var accountViewModel = new AccountViewModel
                 {
-                    UserId = user.Id,
+                    UserId = user.UserId,
                     FirstName = user.FirstName,
                     LastName = user.LastName,
                     Email = user.Email,
@@ -90,7 +89,7 @@ namespace MVCCore.Controllers
                 Password = loginModel.Password
             };
 
-            ServiceResultDTO<ApplicationUserDTO> result = await _accountService.LoginAsync(loginDTO);
+            ServiceResultDTO<ApplicationUserDTO> result = await _accountService.LoginUserAsync(loginDTO);
             if (result.IsSuccess)
             {
                 var user = result.Data as ApplicationUserDTO;
@@ -99,21 +98,22 @@ namespace MVCCore.Controllers
                     return Unauthorized("Invalid user data");
                 }
 
-                var roleName = user.RoleName ?? "User"; // Fetching role name from result if available
+                var roleName = user.RoleName ?? "User";
                 var cookieOptions = new CookieOptions
                 {
                     HttpOnly = true,
                     Expires = DateTime.UtcNow.AddDays(7)
                 };
-                Response.Cookies.Append("RoleName", roleName, cookieOptions);
 
                 var accountViewModel = new AccountViewModel
                 {
+                    UserId = user.UserId,
+                    Email = user.Email,
                     FirstName = user.FirstName,
                     LastName = user.LastName,
-                    Email = user.Email,
                     CreationDate = user.DateOfCreation,
-                    Role = roleName
+                    Role = roleName,
+                    Address = user.Address
                 };
 
                 return Ok(accountViewModel);
@@ -125,7 +125,7 @@ namespace MVCCore.Controllers
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
-            await _accountService.LogoutAsync();
+            await _accountService.LogoutUserAsync();
             // Clear user data from cookies
             if (Request.Cookies.ContainsKey("RoleName"))
             {

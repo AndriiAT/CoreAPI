@@ -5,10 +5,12 @@ namespace ProductsShop.Repositories.Accounts
 {
     public interface IAccountRepository
     {
-        Task<ServiceResultDTO<IEnumerable<ApplicationUserDTO>>> GetAllAsync();
-        Task<ServiceResultDTO<ApplicationUserDTO>> CreateAsync(RegisterDTO registerDTO);
-        Task<ServiceResultDTO<ApplicationUserDTO>> LoginAsync(LoginDTO loginDTO);
-        Task<ServiceResultDTO<string>> RemoveAsync(string email);
-        Task<ServiceResultDTO<string>> LogoutAsync();
+        Task<ServiceResultDTO<IEnumerable<ApplicationUserDTO>>> ReadAllAsync();
+        Task<ServiceResultDTO<ApplicationUserDTO>> ReadByEmailAsync(string email);
+        Task<ServiceResultDTO<ApplicationUserDTO>> CreateAccountAsync(RegisterDTO registerDTO);
+        Task<ServiceResultDTO<ApplicationUserDTO>> LoginUserAsync(LoginDTO loginDTO);
+        Task<ServiceResultDTO<ApplicationUserDTO>> UpdateAccountAsync(RegisterDTO existingUser);
+        Task<ServiceResultDTO<string>> RemoveAccountByEmailAsync(string email);
+        Task<ServiceResultDTO<string>> LogoutUserAsync();
     }
 }

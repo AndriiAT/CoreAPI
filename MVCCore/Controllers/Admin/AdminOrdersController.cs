@@ -9,43 +9,41 @@ using System.Linq;
 using System.Threading.Tasks;
 using static Persistance.DTOs.Orders.Enums;
 
-namespace MVCCore.Controllers
+namespace MVCCore.Controllers.Admin
 {
-    [Authorize]
+    [Authorize(Roles = "Admin,Manager")]
     [ApiController]
     [Route("[controller]")]
-    public class OrdersUserController : ControllerBase
+    public class OrdersAdminController : ControllerBase
     {
         private readonly IOrderRepository _ordersRepository;
         private readonly ICustomAuthorizationService _authorizationService;
 
-        public OrdersUserController(IOrderRepository ordersRepository, ICustomAuthorizationService authorizationService)
+        public OrdersAdminController(IOrderRepository ordersRepository, ICustomAuthorizationService authorizationService)
         {
             _ordersRepository = ordersRepository;
             _authorizationService = authorizationService;
         }
 
-        // GET: api/orders/5
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetOrder([FromRoute] string id)
+        // GET: api/orders
+        [HttpGet("orders")]
+        public async Task<IActionResult> GetOrders()
         {
-            var user = _authorizationService.GetAuthorizedUserAsync().Result;
+            var ordersResult = await _ordersRepository.ReadUserOrdersAsync();
 
-            var order = await _ordersRepository.ReadOrderAsync(user.UserId, id);
-
-            if (order == null)
+            if (!ordersResult.IsSuccess)
             {
-                return NotFound();
+                return BadRequest(ordersResult.ErrorMessage);
             }
 
-            return Ok(order);
+            return Ok(ordersResult.Data);
         }
 
         // POST: api/orders
-        [HttpPost("Create")]
+        [HttpPost("create")]
         public async Task<IActionResult> CreateOrder([FromBody] OrderBuildingModel order)
         {
-            var user = _authorizationService.GetAuthorizedUserAsync().Result;
+            var user = await _authorizationService.GetAuthorizedUserAsync();
             if (user.UserId == null)
             {
                 return BadRequest("You have no permission to create order");
@@ -73,15 +71,13 @@ namespace MVCCore.Controllers
         }
 
         // PUT: api/orders/5
-        [HttpPut("Update/{id}")]
+        [HttpPut("update/{id}")]
         public async Task<IActionResult> UpdateOrder([FromRoute] string id, [FromBody] OrderBuildingModel order)
         {
             var user = await _authorizationService.GetAuthorizedUserAsync();
-            var userID = user.UserId;
+            var order_check = await _ordersRepository.ReadOrderAsync(user.UserId, id);
 
-            var order_check = await _ordersRepository.ReadOrderAsync(userID, id);
-
-            if (order_check == null || (User.IsInRole("User") && order_check.UserId != userID))
+            if (order_check == null || order_check.UserId != user.UserId)
             {
                 return NotFound();
             }
@@ -89,7 +85,7 @@ namespace MVCCore.Controllers
             var orderDTO = new OrderDTO
             {
                 OrderId = id,
-                UserId = userID,
+                UserId = user.UserId,
                 OrderedProducts = order.Products.Select(p => new OrderedProductDTO
                 {
                     OrderId = id,
@@ -98,7 +94,7 @@ namespace MVCCore.Controllers
                 }).ToList(),
                 ModifiedDate = System.DateTime.UtcNow
             };
-            var updatedOrderResult = await _ordersRepository.UpdateOrderAsync(userID, orderDTO);
+            var updatedOrderResult = await _ordersRepository.UpdateOrderAsync(user.UserId, orderDTO);
 
             if (!updatedOrderResult.IsSuccess)
             {
@@ -107,19 +103,24 @@ namespace MVCCore.Controllers
             return Ok(updatedOrderResult.Data);
         }
 
-        // DELETE: api/orders/5
+        // DELETE: api/orders
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteOrder([FromRoute] int id)
+        public async Task<IActionResult> DeleteOrder([FromRoute] string id)
         {
             var user = await _authorizationService.GetAuthorizedUserAsync();
-            var order = await _ordersRepository.ReadOrderAsync(user.UserId, id.ToString());
-            
-            if (order == null)
+            var order_check = await _ordersRepository.ReadOrderAsync(user.UserId, id);
+
+            if (order_check == null || order_check.UserId != user.UserId)
             {
                 return NotFound();
             }
-            
-            await _ordersRepository.DeleteOrderAsync(id.ToString());
+
+            var deleteResult = await _ordersRepository.DeleteOrderAsync(id);
+            if (!deleteResult.IsSuccess)
+            {
+                return BadRequest(deleteResult.ErrorMessage);
+            }
+
             return NoContent();
         }
     }

@@ -1,13 +1,14 @@
-﻿using Persistance.DTOs.Products;
+﻿using Persistance.DTOs;
+using Persistance.DTOs.Products;
 
 namespace Persistance.Repositories.Products
 {
     public interface IProductRepository
     {
-        Task<ProductDTO> CreateAsync(ProductDTO product);
-        Task<ProductDTO> ReadAsync(int productId);
-        Task<ProductDTO> UpdateAsync(ProductDTO product);
-        Task DeleteAsync(int productId);
-        Task<IEnumerable<ProductListDTO>> ReadAllAsync();
+        Task<ServiceResultDTO<ProductDTO>> CreateProductAsync(ProductDTO product);
+        Task<ServiceResultDTO<ProductDTO>> ReadProductAsync(string productId);
+        Task<ServiceResultDTO<ProductDTO>> UpdateProductAsync(ProductDTO product);
+        Task<ServiceResultDTO<string>> DeleteProductAsync(string productId);
+        Task<ServiceResultDTO<IEnumerable<ProductListDTO>>> ReadAllProductsAsync();
     }
 }

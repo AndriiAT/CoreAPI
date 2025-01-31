@@ -21,9 +21,9 @@ namespace MVCCore.Models.Accounts
         public DateTime CreationDate { get; set; }
 
         [JsonProperty("role")]
-        public string? Role { get; set; }
+        public string Role { get; set; }
 
         [JsonProperty("address")]
-        public string? Address { get; set; }
+        public string Address { get; set; }
     }
 }

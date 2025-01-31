@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace MVCCore.Models.Products
@@ -7,7 +8,7 @@ namespace MVCCore.Models.Products
     {
         [JsonProperty("productId")]
         [Required]
-        public int ProductId { get; set; }
+        public string ProductId { get; set; }
 
         [JsonProperty("name")]
         [Required]

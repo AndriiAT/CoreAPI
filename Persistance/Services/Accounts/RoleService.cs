@@ -14,22 +14,41 @@ namespace Persistance.Services.Accounts
 
         public async Task<IEnumerable<ApplicationRoleDTO>> GetRolesAsync()
         {
-            return await _roleRepository.ReadAllAsync();
+            var result = await _roleRepository.ReadAllRolesAsync();
+            if (!result.IsSuccess)
+            {
+                throw new Exception(result.ErrorMessage);
+            }
+            return result.Data;
         }
 
         public async Task<ApplicationRoleDTO> CreateRoleAsync(ApplicationRoleDTO newRole)
         {
-            return await _roleRepository.CreateAsync(newRole);
+            var result = await _roleRepository.CreateRoleAsync(newRole);
+            if (!result.IsSuccess)
+            {
+                throw new Exception(result.ErrorMessage);
+            }
+            return result.Data;
         }
 
         public async Task<ApplicationRoleDTO> UpdateRoleAsync(ApplicationRoleDTO updatedRole)
         {
-            return await _roleRepository.UpdateAsync(updatedRole);
+            var result = await _roleRepository.UpdateRoleAsync(updatedRole);
+            if (!result.IsSuccess)
+            {
+                throw new Exception(result.ErrorMessage);
+            }
+            return result.Data;
         }
 
         public async Task DeleteRoleAsync(string id)
         {
-            await _roleRepository.DeleteAsync(id);
+            var result = await _roleRepository.DeleteRoleAsync(id);
+            if (!result.IsSuccess)
+            {
+                throw new Exception(result.ErrorMessage);
+            }
         }
     }
 }

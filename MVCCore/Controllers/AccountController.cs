@@ -1,11 +1,18 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authentication.Facebook;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MVCCore.Models.Accounts;
 using Persistance.DTOs;
 using Persistance.DTOs.Accounts;
 using Persistance.Services.Accounts;
 using System;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace MVCCore.Controllers
 {
@@ -133,6 +140,60 @@ namespace MVCCore.Controllers
             }
 
             return Ok("User logged out successfully");
+        }
+
+        [HttpGet("login-google")]
+        public IActionResult LoginWithGoogle()
+        {
+            var redirectUrl = Url.Action("GoogleResponse", "Account");
+            var properties = new AuthenticationProperties { RedirectUri = redirectUrl };
+            return Challenge(properties, GoogleDefaults.AuthenticationScheme);
+        }
+
+        [HttpGet("google-response")]
+        public async Task<IActionResult> GoogleResponse()
+        {
+            var result = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            if (!result.Succeeded)
+                return BadRequest();
+
+            var claims = result.Principal.Identities
+                .FirstOrDefault()?.Claims.Select(claim => new
+                {
+                    claim.Issuer,
+                    claim.OriginalIssuer,
+                    claim.Type,
+                    claim.Value
+                });
+
+            return Ok(claims);
+        }
+
+        [HttpGet("login-facebook")]
+        public IActionResult LoginWithFacebook()
+        {
+            var redirectUrl = Url.Action("FacebookResponse", "Account");
+            var properties = new AuthenticationProperties { RedirectUri = redirectUrl };
+            return Challenge(properties, FacebookDefaults.AuthenticationScheme);
+        }
+
+        [HttpGet("facebook-response")]
+        public async Task<IActionResult> FacebookResponse()
+        {
+            var result = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            if (!result.Succeeded)
+                return BadRequest();
+
+            var claims = result.Principal.Identities
+                .FirstOrDefault()?.Claims.Select(claim => new
+                {
+                    claim.Issuer,
+                    claim.OriginalIssuer,
+                    claim.Type,
+                    claim.Value
+                });
+
+            return Ok(claims);
         }
     }
 }

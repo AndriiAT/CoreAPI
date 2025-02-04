@@ -52,6 +52,21 @@
                     background-color: #0056b3;
                 }
 
+            .login-container .social-login {
+                display: flex;
+                justify-content: space-between;
+                margin-top: 20px;
+            }
+
+                .login-container .social-login button {
+                    width: 48%;
+                    background-color: #db4437; /* Google red */
+                }
+
+                    .login-container .social-login button.facebook {
+                        background-color: #3b5998; /* Facebook blue */
+                    }
+
         .error-message {
             color: red;
             text-align: center;
@@ -67,10 +82,15 @@
             <input type="password" id="password" name="password" placeholder="Password" required>
             <button type="submit">Login</button>
         </form>
+        <div class="social-login">
+            <button onclick="window.location.href='/account/login-google'">Login with Google</button>
+            <button class="facebook" onclick="window.location.href='/account/login-facebook'">Login with Facebook</button>
+        </div>
         <div class="error-message" id="errorMessage"></div>
     </div>
 
-    <script>document.getElementById('loginForm').addEventListener('submit', async function(event) {
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function (event) {
             event.preventDefault();
 
             const email = document.getElementById('email').value;
@@ -90,6 +110,8 @@
                 const errorData = await response.json();
                 document.getElementById('errorMessage').textContent = errorData.error || 'Invalid login credentials';
             }
-        });</script>
+        });
+    </script>
 </body>
 </html>
+ 
